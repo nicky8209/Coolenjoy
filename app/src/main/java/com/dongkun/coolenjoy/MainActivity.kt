@@ -164,6 +164,7 @@ class MainActivity : Activity() {
 
             override fun onLoadResource(view: WebView, url: String) {
                 super.onLoadResource(view, url)
+                //210716 remove ad by nicky8209
                 val s = "function f() {" +
                         "    document.getElementById(\"aswift_0_anchor\").style = \"display: block; border: none; height: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; width: 400px; background-color: transparent; overflow: hidden; transition: opacity 1s cubic-bezier(0.4, 0, 1, 1) 0s, width 0.2s cubic-bezier(0.4, 0, 1, 1) 0.3s, height 0.5s cubic-bezier(0.4, 0, 1, 1) 0s; opacity: 0;\";" +
                         "    document.getElementById(\"aswift_0_expand\").style = \"display: inline-table; border: none; height: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; width: 400px; background-color: transparent;\";" +
