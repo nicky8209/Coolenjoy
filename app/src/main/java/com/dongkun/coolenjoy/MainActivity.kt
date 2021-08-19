@@ -40,12 +40,11 @@ import javax.crypto.spec.SecretKeySpec
 
 open class MainActivity : Activity() {
 
-    private var currentPageURL: String = "http://www.wikipedia.com"
     private lateinit var mContext: Context
     internal var mLoaded = false
 
     // set your custom url here
-    internal var URL = "https://coolenjoy.net/"
+    private var currentPageURL: String = "https://coolenjoy.net/"
 
     //for attach files
     private var mCameraPhotoPath: String? = null
