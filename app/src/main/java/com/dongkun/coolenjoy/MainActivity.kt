@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -13,6 +14,7 @@ import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
 import android.view.KeyEvent
+import android.view.MenuItem
 import android.view.View
 import android.webkit.*
 import android.webkit.WebSettings.RenderPriority
@@ -23,6 +25,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.IOException
 import java.security.NoSuchAlgorithmException
@@ -33,7 +38,9 @@ import java.util.*
 import javax.crypto.*
 import javax.crypto.spec.SecretKeySpec
 
-class MainActivity : Activity() {
+open class MainActivity : Activity() {
+
+    private var currentPageURL: String = "http://www.wikipedia.com"
     private lateinit var mContext: Context
     internal var mLoaded = false
 
@@ -46,6 +53,9 @@ class MainActivity : Activity() {
     internal var doubleBackToExitPressedOnce = false
     internal var doubleVolumeDownPressedOnce = false
 
+    val PREFERENCES = "PREFERENCES_NAME"
+    val WEB_LINKS = "links"
+    val WEB_TITLE = "title"
 
     //AdView adView;
     private lateinit var btnTryAgain: Button
@@ -64,6 +74,10 @@ class MainActivity : Activity() {
 
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
 
+        if (intent.extras != null) {
+            currentPageURL = intent.getStringExtra("url").toString()
+        }
+
         mContext = this
         mWebView = findViewById<View>(R.id.webview) as WebView
 
@@ -79,7 +93,6 @@ class MainActivity : Activity() {
 
 
     }
-
 
     private fun requestForWebview() {
 
@@ -104,7 +117,7 @@ class MainActivity : Activity() {
         /** Layout of webview screen View  */
         mWebView.visibility = View.VISIBLE
 //        layoutNoInternet.visibility = View.GONE
-        mWebView.loadUrl(URL)
+        mWebView.loadUrl(currentPageURL)
         mWebView.isFocusable = true
         mWebView.isFocusableInTouchMode = true
         mWebView.settings.javaScriptEnabled = true
@@ -160,6 +173,9 @@ class MainActivity : Activity() {
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                currentPageURL = url.toString()
+                invalidateOptionsMenu()
+
             }
 
             override fun onLoadResource(view: WebView, url: String) {
@@ -350,13 +366,79 @@ class MainActivity : Activity() {
             this.doubleVolumeDownPressedOnce = true
 //            Toast.makeText(this, "한번 더 누르시면 종료됩니다.", Toast.LENGTH_SHORT).show()
 
-            Handler().postDelayed({ doubleVolumeDownPressedOnce                                                                                              = false }, 2000)
+            Handler().postDelayed({ doubleVolumeDownPressedOnce = false }, 2000)
             return true
 
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            val message: String
+            val sharedPreferences = getSharedPreferences(
+                PREFERENCES, Context.MODE_PRIVATE
+            )
+            val jsonLink = sharedPreferences.getString(
+                WEB_LINKS, null
+            )
+            val jsonTitle = sharedPreferences.getString(
+                WEB_TITLE, null
+            )
+            if (jsonLink != null && jsonTitle != null) {
+                val gson = Gson()
+                val linkList: ArrayList<String> =
+                    gson.fromJson(jsonLink, object : TypeToken<ArrayList<String?>?>() {}.type)
+                val titleList: ArrayList<String> =
+                    gson.fromJson(jsonTitle, object : TypeToken<ArrayList<String?>?>() {}.type)
+                if (linkList.contains(currentPageURL)) {
+                    linkList.remove(currentPageURL)
+                    titleList.remove(mWebView.title.toString().trim { it <= ' ' })
+                    val editor = sharedPreferences.edit()
+                    editor.putString(
+                        WEB_LINKS,
+                        Gson().toJson(linkList)
+                    )
+                    editor.putString(
+                        WEB_TITLE,
+                        Gson().toJson(titleList)
+                    )
+                    editor.apply()
+                    message = "Bookmark Removed"
+                } else {
+                    linkList.add(currentPageURL)
+                    titleList.add(mWebView.title.toString().trim { it <= ' ' })
+                    val editor = sharedPreferences.edit()
+                    editor.putString(
+                        WEB_LINKS,
+                        Gson().toJson(linkList)
+                    )
+                    editor.putString(
+                        WEB_TITLE,
+                        Gson().toJson(titleList)
+                    )
+                    editor.apply()
+                    message = "Bookmarked"
+                }
+            } else {
+                val linkList = ArrayList<String>()
+                val titleList = ArrayList<String>()
+                linkList.add(currentPageURL)
+                titleList.add(mWebView.title.toString())
+                val editor = sharedPreferences.edit()
+                editor.putString(
+                    WEB_LINKS,
+                    Gson().toJson(linkList)
+                )
+                editor.putString(
+                    WEB_TITLE,
+                    Gson().toJson(titleList)
+                )
+                editor.apply()
+                message = "Bookmarked"
+            }
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            invalidateOptionsMenu()
+            return true
         }
-        return false
-
+        return super.onKeyDown(keyCode, event)
     }
+
 
     companion object {
         internal var TAG = "---MainActivity"
