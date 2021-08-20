@@ -56,13 +56,14 @@ class BookmarkActivity : AppCompatActivity() {
                 val `in` = Intent(this@BookmarkActivity, MainActivity::class.java)
                 `in`.putExtra("url", map[TAG_LINK].toString())
                 startActivity(`in`)
+                this.finish()
             }
         }
 
 
     }
 
-    inner private class LoadBookmarks : AsyncTask<String, String, String>() {
+    private inner class LoadBookmarks : AsyncTask<String, String, String>() {
 
         override fun doInBackground(vararg args: String?): String? {
             // updating UI from Background Thread

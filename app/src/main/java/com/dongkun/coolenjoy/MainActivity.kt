@@ -435,7 +435,7 @@ open class MainActivity : Activity() {
             invalidateOptionsMenu()
             return true
         }
-        return super.onKeyDown(keyCode, event)
+        return false
     }
 
 
